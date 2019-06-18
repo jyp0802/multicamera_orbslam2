@@ -1,0 +1,108 @@
+cmake_minimum_required(VERSION 2.8.3)
+
+project(multicamera_orbslam2)
+
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  sensor_msgs
+  image_transport
+  message_filters
+  cv_bridge
+  tf
+)
+
+find_package(OpenCV  REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(Pangolin REQUIRED)
+
+LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
+
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall  -O3 -march=native")
+
+
+set(PROJECT_INCLUDE_DIRS
+  ${PROJECT_SOURCE_DIR}/include    # ORB_SLAM2/System.h
+  ${PROJECT_SOURCE_DIR}
+)
+
+set(PROJECT_LIBRARIES
+  ${PROJECT_SOURCE_DIR}/lib/libORB_SLAM2.so
+  ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+  ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
+)
+
+add_library(libORB_SLAM2 SHARED IMPORTED)
+set_property(TARGET libORB_SLAM2 PROPERTY IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/lib/libORB_SLAM2.so)
+
+
+###################################
+## catkin specific configuration ##
+###################################
+## The catkin_package macro generates cmake config files for your package
+## Declare things to be passed to dependent projects
+## INCLUDE_DIRS: uncomment this if you package contains header files
+## LIBRARIES: libraries you create in this project that dependent projects also need
+## CATKIN_DEPENDS: catkin_packages dependent projects also need
+## DEPENDS: system dependencies of this project that dependent projects also need
+catkin_package(
+  INCLUDE_DIRS ${PROJECT_INCLUDE_DIRS}
+  LIBRARIES libORB_SLAM2 ${PROJECT_LIBRARIES}
+  DEPENDS OpenCV Pangolin Eigen3
+)
+
+
+###########
+## Build ##
+###########
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+  ${PROJECT_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
+  ${Eigen3_INCLUDE_DIRS}
+  ${Pangolin_INCLUDE_DIRS}
+)
+
+set(LIBRARIES
+  ${catkin_LIBRARIES}
+  ${PROJECT_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  ${Eigen3_LIBRARIES}
+  ${Pangolin_LIBRARIES}
+)
+
+
+# Node for monocular camera
+add_executable(mono_slam_node src/ros_mono.cc)
+target_link_libraries(mono_slam_node ${LIBRARIES})
+
+
+# Node for RGB-D camera
+add_executable(rgbd_slam_node src/ros_rgbd.cc )
+target_link_libraries(rgbd_slam_node ${LIBRARIES})
+
+# Node for stereo camera
+add_executable(stereo_slam_node src/ros_stereo.cc)
+target_link_libraries(stereo_slam_node ${LIBRARIES})
+
+
+#############
+## Install ##
+#############
+
+# all install targets should use catkin DESTINATION variables
+# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
+
+## Mark executables and/or libraries for installation
+install(TARGETS mono_slam_node rgbd_slam_node stereo_slam_node
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+## Mark cpp header files for installation
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include
+   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
