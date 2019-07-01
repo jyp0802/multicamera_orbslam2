@@ -25,4 +25,4 @@ cd ..
 echo "Configuring and building ORB_SLAM2 ..."
 
 cd ../../
-catkin_make .. -DCMAKE_BUILD_TYPE=Release
+catkin_make -DCMAKE_BUILD_TYPE=Release

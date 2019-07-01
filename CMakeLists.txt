@@ -22,20 +22,48 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native ")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall  -O3 -march=native")
 
+set(THIRDPARTY_LIBRARIES
+  ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
+  ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+)
+
+# Build the original source files
+
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+
+add_library(${PROJECT_NAME} SHARED
+  src/System.cc
+  src/Tracking.cc
+  src/LocalMapping.cc
+  src/LoopClosing.cc
+  src/ORBextractor.cc
+  src/ORBmatcher.cc
+  src/FrameDrawer.cc
+  src/Converter.cc
+  src/MapPoint.cc
+  src/KeyFrame.cc
+  src/Map.cc
+  src/MapDrawer.cc
+  src/Optimizer.cc
+  src/PnPsolver.cc
+  src/Frame.cc
+  src/KeyFrameDatabase.cc
+  src/Sim3Solver.cc
+  src/Initializer.cc
+  src/Viewer.cc
+)
+
+target_link_libraries(${PROJECT_NAME}
+  ${OpenCV_LIBS}
+  ${EIGEN3_LIBS}
+  ${Pangolin_LIBRARIES}
+  ${THIRDPARTY_LIBRARIES}
+)
 
 set(PROJECT_INCLUDE_DIRS
-  ${PROJECT_SOURCE_DIR}/include    # ORB_SLAM2/System.h
+  ${PROJECT_SOURCE_DIR}/include
   ${PROJECT_SOURCE_DIR}
 )
-
-set(PROJECT_LIBRARIES
-  ${PROJECT_SOURCE_DIR}/lib/libORB_SLAM2.so
-  ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
-  ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
-)
-
-add_library(libORB_SLAM2 SHARED IMPORTED)
-set_property(TARGET libORB_SLAM2 PROPERTY IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/lib/libORB_SLAM2.so)
 
 
 ###################################
@@ -49,8 +77,8 @@ set_property(TARGET libORB_SLAM2 PROPERTY IMPORTED_LOCATION ${PROJECT_SOURCE_DIR
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS ${PROJECT_INCLUDE_DIRS}
-  LIBRARIES libORB_SLAM2 ${PROJECT_LIBRARIES}
-  DEPENDS OpenCV Pangolin Eigen3
+  LIBRARIES ${PROJECT_NAME} ${THIRDPARTY_LIBRARIES}
+  DEPENDS OpenCV Pangolin EIGEN3
 )
 
 
@@ -67,25 +95,22 @@ include_directories(
 
 set(LIBRARIES
   ${catkin_LIBRARIES}
-  ${PROJECT_LIBRARIES}
-  ${OpenCV_LIBRARIES}
-  ${Eigen3_LIBRARIES}
-  ${Pangolin_LIBRARIES}
+  ${PROJECT_NAME}
 )
 
 
 # Node for monocular camera
-add_executable(mono_slam_node src/ros_mono.cc)
-target_link_libraries(mono_slam_node ${LIBRARIES})
+add_executable(multi_mono_slam_node src/ros_mono.cc)
+target_link_libraries(multi_mono_slam_node ${LIBRARIES})
 
 
 # Node for RGB-D camera
-add_executable(rgbd_slam_node src/ros_rgbd.cc )
-target_link_libraries(rgbd_slam_node ${LIBRARIES})
+add_executable(multi_rgbd_slam_node src/ros_rgbd.cc )
+target_link_libraries(multi_rgbd_slam_node ${LIBRARIES})
 
 # Node for stereo camera
-add_executable(stereo_slam_node src/ros_stereo.cc)
-target_link_libraries(stereo_slam_node ${LIBRARIES})
+add_executable(multi_stereo_slam_node src/ros_stereo.cc)
+target_link_libraries(multi_stereo_slam_node ${LIBRARIES})
 
 
 #############
@@ -96,7 +121,7 @@ target_link_libraries(stereo_slam_node ${LIBRARIES})
 # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
 
 ## Mark executables and/or libraries for installation
-install(TARGETS mono_slam_node rgbd_slam_node stereo_slam_node
+install(TARGETS multi_mono_slam_node multi_rgbd_slam_node multi_stereo_slam_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
