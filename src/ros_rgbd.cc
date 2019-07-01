@@ -51,12 +51,12 @@ public:
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "rgbd_slam");
+    ros::init(argc, argv, "multi_rgbd_slam");
     ros::start();
 
     if(argc != 3)
     {
-        cerr << endl << "Usage: rosrun ORB_SLAM2 RGBD path_to_vocabulary path_to_settings" << endl;        
+        cerr << endl << "Usage: rosrun ORB_SLAM2 multi_rgbd_slam path_to_vocabulary path_to_settings" << endl;        
         ros::shutdown();
         return 1;
     }    
